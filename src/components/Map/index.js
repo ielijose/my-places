@@ -12,7 +12,7 @@ const Map = (props) => {
   const dispatch = useDispatch();
   const { places, userLocation } = useSelector((state) => state.places);
 
-  const [center, setCenter] = useState(userLocation || DEFAULT_MAP_CENTER);
+  const [center, setCenter] = useState(userLocation);
   const [showInfoWindow, setShowInfoWindow] = useState(false);
   const [activeMarker, setActiveMarker] = useState(null);
   const [activePlace, setActivePlace] = useState({});
@@ -50,7 +50,12 @@ const Map = (props) => {
   };
 
   return (
-    <StyledMap google={props.google} onClick={onMapClicked} center={center} zoom={DEFAULT_ZOOM}>
+    <StyledMap
+      google={props.google}
+      onClick={onMapClicked}
+      center={center}
+      zoom={DEFAULT_ZOOM}
+      initialCenter={DEFAULT_MAP_CENTER}>
       {places.map((place) => {
         const { lat, lng, id, name } = place;
 
