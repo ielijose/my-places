@@ -1,13 +1,14 @@
+const CompressionPlugin = require('compression-webpack-plugin');
+const CopyPlugin = require('copy-webpack-plugin');
+const dotenv = require('dotenv');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const path = require('path');
-const dotenv = require('dotenv');
+const TerserPlugin = require('terser-webpack-plugin');
 const webpack = require('webpack');
-const CopyPlugin = require('copy-webpack-plugin');
 const WebpackPwaManifestPlugin = require('webpack-pwa-manifest');
 
 const env = dotenv.config().parsed;
 
-// reduce it to a nice object, the same as before
 const envKeys = Object.keys(env).reduce((prev, next) => {
   prev[`process.env.${next}`] = JSON.stringify(env[next]);
   return prev;
@@ -20,15 +21,11 @@ module.exports = {
   },
   plugins: [
     new CopyPlugin({
-      patterns: [{ from: './public/favicon.ico', to: './' }],
-      options: {
-        concurrency: 100,
-      },
+      patterns: [{ from: './public/favicon.ico', to: './dist' }],
     }),
-
     new HtmlWebpackPlugin({
       template: 'public/index.html',
-      favicon: './public/favicon.ico',
+      favicon: './dist/favicon.ico',
     }),
     new webpack.DefinePlugin(envKeys),
     new WebpackPwaManifestPlugin({
@@ -44,7 +41,31 @@ module.exports = {
         },
       ],
     }),
+    new CompressionPlugin({
+      test: /\.js$|\.css$/,
+      filename: '[path].gz',
+    }),
   ],
+  optimization: {
+    minimizer: [new TerserPlugin()],
+    splitChunks: {
+      chunks: 'async',
+      name: true,
+      cacheGroups: {
+        vendors: {
+          name: 'vendors',
+          chunks: 'all',
+          reuseExistingChunk: true,
+          priority: 1,
+          enforce: true,
+          test(module, chunks) {
+            const name = module.nameForCondition && module.nameForCondition();
+            return chunks.some((chunk) => chunk.name !== 'vendor' && /[\\/]node_modules[\\/]/.test(name));
+          },
+        },
+      },
+    },
+  },
   module: {
     rules: [
       {
